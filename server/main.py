@@ -27,10 +27,25 @@ load_dotenv()
 
 app = FastAPI(title="Python File Converter API", version="1.0.0")
 
+
+def resolve_cors_settings():
+    raw = os.getenv("CORS_ORIGINS", "*").strip()
+    if raw == "*":
+        return ["*"], False
+
+    origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+    if not origins:
+        return ["*"], False
+
+    return origins, True
+
+
+cors_origins, cors_allow_credentials = resolve_cors_settings()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

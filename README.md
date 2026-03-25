@@ -143,28 +143,47 @@ Open the app at `http://localhost:5173`.
 
 ## Deployment Notes
 
-- This repo now includes a root `Dockerfile` that builds frontend + backend and serves both from one container.
-- FastAPI serves the built React app from `server/static` in production.
+### Separate Hosting (Recommended)
 
-### Host On Render / Railway (Recommended)
+Host backend and frontend independently for better scaling and easier updates.
 
-1. Push this repository to GitHub.
-2. Create a new **Web Service** from the repo.
-3. Choose **Dockerfile** deploy (root `Dockerfile`).
-4. Set environment variable:
-  - `PORT=5000` (or let platform inject `PORT`)
-5. Deploy.
+1. Deploy backend (`server`) to Render/Railway/Fly.io.
+2. Deploy frontend (`client`) to Vercel/Netlify.
+3. Connect them using environment variables.
 
-After deploy, your app is available at your service URL (frontend + backend together).
+### Backend Hosting (Render/Railway)
 
-### Local Docker Run
+Build/start commands:
 
 ```bash
-docker build -t format-conversion-app .
-docker run -p 5000:5000 format-conversion-app
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-Open `http://localhost:5000`.
+Backend environment variables:
+
+- `PORT=5000` (platform may inject this automatically)
+- `CORS_ORIGINS=https://your-frontend-domain.vercel.app`
+
+If you have multiple frontend domains, use comma-separated values:
+
+```env
+CORS_ORIGINS=https://your-frontend-domain.vercel.app,https://www.your-custom-domain.com
+```
+
+### Frontend Hosting (Vercel/Netlify)
+
+Set frontend environment variable:
+
+```env
+VITE_API_URL=https://your-backend-domain.onrender.com
+```
+
+Then build/deploy the frontend.
+
+### Optional Single-Container Hosting
+
+A root `Dockerfile` is still included if you later want to host frontend + backend together in one service.
 
 ## Conversion Engine Notes
 
