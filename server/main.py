@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 import fitz
 from pdf2docx import Converter
 from PIL import Image
@@ -37,6 +38,7 @@ app.add_middleware(
 BASE_DIR = Path(__file__).resolve().parent
 TMP_DIR = BASE_DIR / "tmp"
 TMP_DIR.mkdir(parents=True, exist_ok=True)
+STATIC_DIR = BASE_DIR / "static"
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 MAX_EDITOR_CONTENT_LENGTH = 100000
@@ -432,6 +434,41 @@ async def import_editor_content(file: UploadFile = File(...)):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+
+
+if (STATIC_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+
+@app.get("/", include_in_schema=False)
+def serve_root_app():
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "message": "API server running. Build frontend and copy dist to server/static to serve UI.",
+        }
+    )
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def serve_spa_routes(full_path: str):
+    if full_path.startswith("api"):
+        raise HTTPException(status_code=404, detail="API route not found.")
+
+    index_file = STATIC_DIR / "index.html"
+    target_file = STATIC_DIR / full_path
+
+    if target_file.exists() and target_file.is_file():
+        return FileResponse(target_file)
+
+    if index_file.exists():
+        return FileResponse(index_file)
+
+    raise HTTPException(status_code=404, detail="Page not found.")
 
 
 if __name__ == "__main__":

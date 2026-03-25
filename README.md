@@ -143,14 +143,28 @@ Open the app at `http://localhost:5173`.
 
 ## Deployment Notes
 
-- Set environment variables in your hosting provider
-- Use `npm run build` in `client` and serve static output using CDN/Nginx or any static host
-- For backend production start:
+- This repo now includes a root `Dockerfile` that builds frontend + backend and serves both from one container.
+- FastAPI serves the built React app from `server/static` in production.
+
+### Host On Render / Railway (Recommended)
+
+1. Push this repository to GitHub.
+2. Create a new **Web Service** from the repo.
+3. Choose **Dockerfile** deploy (root `Dockerfile`).
+4. Set environment variable:
+  - `PORT=5000` (or let platform inject `PORT`)
+5. Deploy.
+
+After deploy, your app is available at your service URL (frontend + backend together).
+
+### Local Docker Run
 
 ```bash
-cd server
-uvicorn main:app --host 0.0.0.0 --port 5000
+docker build -t format-conversion-app .
+docker run -p 5000:5000 format-conversion-app
 ```
+
+Open `http://localhost:5000`.
 
 ## Conversion Engine Notes
 
